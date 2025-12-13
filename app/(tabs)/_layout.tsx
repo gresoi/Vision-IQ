@@ -20,14 +20,49 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="n.square" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="Dashboard"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="n.square.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="Symptoms"
+        options={{
+          title: 'Symptoms tracking',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="medical.thermometer" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="History"
+        options={{
+          title: 'Family and Health history',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="medical.thermometer" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="Prep"
+        options={{
+          title: 'Appointment prep toolkit',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="medical.thermometer" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="Exams"
+        options={{
+          title: 'Annual Eye Exam Records',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="medical.thermometer" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="DocFinder"
+        options={{
+          title: 'Doctor Finder',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="medical.thermometer" color={color} />,
         }}
       />
     </Tabs>

@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 import { ScreenSkeleton } from "../../components/layouts/ScreenSkeleton"
 
-export default function HomeScreen() {
+export default function DocFinder() {
   return (
     <ScreenSkeleton>
       <View style={styles.content}>
-        <Text style={styles.text}>Home (Blank)</Text>
+        <Text style={styles.text}>Doctor finder: uses Google Maps API (Blank)</Text>
       </View>
     </ScreenSkeleton>
   );

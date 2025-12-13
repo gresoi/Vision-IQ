@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 import { ScreenSkeleton } from "../../components/layouts/ScreenSkeleton"
 
-export default function HomeScreen() {
+export default function Dashboard() {
   return (
     <ScreenSkeleton>
       <View style={styles.content}>
-        <Text style={styles.text}>Home (Blank)</Text>
+        <Text style={styles.text}>Symptoms module (Blank)</Text>
       </View>
     </ScreenSkeleton>
   );
