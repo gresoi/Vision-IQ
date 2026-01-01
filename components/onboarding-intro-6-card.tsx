@@ -50,7 +50,7 @@ export default function OnboardingIntro6Card() {
       {/* CTA */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.replace("/signup")}
+        onPress={() => router.replace("/Home")}
       >
         <Text style={styles.buttonText}>Get Started →</Text>
       </TouchableOpacity>

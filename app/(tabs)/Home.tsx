@@ -1,78 +1,150 @@
-import Card from "@/components/Card";
+import React, { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  Modal,
+} from "react-native";
+
 import Header from "@/components/Header";
-import { ScreenSkeleton } from "@/components/ScreenSkeleton";
+import Card from "@/components/Card";
 import SmallBox from "@/components/SmallBox";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScreenSkeleton } from "@/components/layouts/ScreenSkeleton";
+import LogSymptomsMain from "@/app/(tabs)/LogSymptomsMain";
+import BookAppointmentMain from "@/app/(tabs)/book-appointment";
+
 
 export default function HomeScreen() {
+  const [showLogSymptoms, setShowLogSymptoms] = useState(false);
+
   return (
     <ScreenSkeleton>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        
-        <Header name="User" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.container}
+      >
+        <Header name="Jane" />
 
+        {/* Daily Eye Check */}
         <Card
           title="Daily Eye Check"
-          subtitle="Check how your eyes are feeling today"
-          buttonText="Start Check"
-          onPress={() => {}}
+          subtitle="Take 2 minutes to log how your eyes feel today"
+          buttonText="Log Symptoms"
+          onPress={() => setShowLogSymptoms(true)}
+          variant="highlight"
         />
 
-        <Card
-          title="Log Symptoms"
-          subtitle="Track discomfort or changes"
-          buttonText="Log Now"
-          onPress={() => {}}
-        />
-
+        {/* Your Eye Health */}
         <Card
           title="Your Eye Health"
-          subtitle="Screen time, recent trends"
-          buttonText="See All"
-          onPress={() => {}}
+          rightText="View All"
+          items={[
+            {
+              icon: "trending-up-outline",
+              label: "Vision Trend",
+              value: "Stable this month",
+            },
+            {
+              icon: "time-outline",
+              label: "Screen Time",
+              value: "6.5 hours today",
+            },
+          ]}
         />
 
+        {/* Upcoming */}
         <Card
-          title="Upcoming Appointments"
-          subtitle="Your next scheduled visit"
-          buttonText="See All"
-          onPress={() => {}}
+          title="Upcoming"
+          rightText="View All"
+          items={[
+            {
+              icon: "calendar-outline",
+              label: "Annual Eye Exam",
+              value: "Dec 18, 2025 at 2:00 PM",
+            },
+          ]}
         />
 
+        {/* Today's Tip */}
         <Card
           title="Today's Tip"
-          subtitle="Blink more often when using screens"
+          subtitle="Follow the 20-20-20 rule. Every 20 minutes, look at something 20 feet away for 20 seconds."
+          buttonText="Learn More"
         />
 
-        <View style={styles.row}>
-          <SmallBox title="My Notes" />
-          <SmallBox title="Symptom Tracker" />
+        {/* Quick Actions */}
+        <View style={styles.grid}>
+          <SmallBox title="My Notes" icon="document-outline" color="#F59E0B" />
+          <SmallBox title="Symptom Tracker" icon="pulse-outline" color="#EF4444" />
+          <SmallBox title="Find Doctor" icon="location-outline" color="#3B82F6" />
+          <SmallBox title="Family History" icon="people-outline" color="#8B5CF6" />
+          <SmallBox title="Appointment Prep" icon="calendar-outline" color="#10B981" />
+          <SmallBox title="Exam Records" icon="folder-outline" color="#6366F1" />
         </View>
 
-        <View style={styles.row}>
-          <SmallBox title="Find Doctor" />
-          <SmallBox title="Family History" />
-        </View>
-
-        <View style={styles.row}>
-          <SmallBox title="Appointment Prep" />
-          <SmallBox title="Exam Records" />
-        </View>
-
+        {/* Recent Exams */}
         <Card
           title="Recent Exams"
-          subtitle="View your recent eye exam results"
+          rightText="View All"
+          items={[
+            {
+              icon: "document-text-outline",
+              label: "Annual Eye Exam",
+              value: "Dec 15, 2025 · Dr. Sarah Johnson",
+            },
+          ]}
         />
-
       </ScrollView>
+
+      {/* Log Symptoms Tab */}
+      <Modal
+        visible={showLogSymptoms}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowLogSymptoms(false)} // Android back
+      >
+        <View style={styles.modalWrapper}>
+          <LogSymptomsMain onClose={() => setShowLogSymptoms(false)} />
+        </View>
+      </Modal>
     </ScreenSkeleton>
   );
 }
+const [showBook, setShowBook] = useState(false);
+
+<Modal
+  visible={showBook}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setShowBook(false)}
+>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(0,0,0,0.3)",
+    }}
+  >
+    <BookAppointmentMain onClose={() => setShowBook(false)} />
+  </View>
+</Modal>
+
 
 const styles = StyleSheet.create({
-  row: {
+  container: {
+    paddingBottom: 24,
+  },
+  grid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 12,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  modalWrapper: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
 });

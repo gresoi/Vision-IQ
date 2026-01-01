@@ -1,30 +1,43 @@
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
 };
 
-export default function SmallBox({ title }: Props) {
+export default function SmallBox({ title, icon, color }: Props) {
   return (
-    <TouchableOpacity style={styles.box}>
+    <View style={styles.box}>
+      <View style={[styles.iconWrap, { backgroundColor: color }]}>
+        <Ionicons name={icon} size={18} color="#FFFFFF" />
+      </View>
       <Text style={styles.text}>{title}</Text>
-    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   box: {
-    flex: 1,
+    width: "48%",
     backgroundColor: "#FFFFFF",
-    padding: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 16,
+    padding: 12,
     marginBottom: 12,
-    elevation: 2,
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
   },
   text: {
     fontSize: 13,
     fontWeight: "500",
   },
 });
+

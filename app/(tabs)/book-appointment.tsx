@@ -1,82 +1,234 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
-export default function BookAppointmentSkeleton() {
+type Props = {
+  onClose: () => void;
+};
+
+export default function BookAppointmentMain({ onClose }: Props) {
+  const [appointmentType, setAppointmentType] = useState("");
+  const [doctor, setDoctor] = useState("");
+  const [date, setDate] = useState<Date | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [visitType, setVisitType] = useState<"In-Person" | "Virtual">(
+    "In-Person"
+  );
+  const [notes, setNotes] = useState("");
+
+  const handleSubmit = () => {
+    const payload = {
+      appointmentType,
+      doctor,
+      date,
+      visitType,
+      notes,
+    };
+
+    console.log("Appointment Requested:", payload);
+    onClose(); // ✅ go back to home / appointments
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView>
-
-        {/* Page Title */}
-        <Text style={styles.header}>Book Appointment</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <Text style={styles.header}>Book Appointment</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Ionicons name="close" size={22} />
+          </TouchableOpacity>
+        </View>
 
         {/* Appointment Type */}
         <Text style={styles.label}>Appointment Type</Text>
-        <View style={styles.inputBox}><Text>Type here...</Text></View>
+        <TextInput
+          style={styles.input}
+          placeholder="Routine checkup, follow-up..."
+          value={appointmentType}
+          onChangeText={setAppointmentType}
+        />
 
         {/* Preferred Doctor */}
         <Text style={styles.label}>Preferred Doctor</Text>
-        <View style={styles.inputBox}><Text>Type here...</Text></View>
+        <TextInput
+          style={styles.input}
+          placeholder="Doctor name"
+          value={doctor}
+          onChangeText={setDoctor}
+        />
 
         {/* Preferred Date */}
         <Text style={styles.label}>Preferred Date</Text>
-        <View style={styles.inputBox}><Text>Select date...</Text></View>
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setShowPicker(true)}
+        >
+          <Text style={{ color: date ? "#111" : "#9CA3AF" }}>
+            {date ? date.toDateString() : "Select date"}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Mode Selection */}
-        <Text style={styles.label}>Mode</Text>
+        {showPicker && (
+          <DateTimePicker
+            value={date || new Date()}
+            mode="date"
+            display={Platform.OS === "ios" ? "inline" : "default"}
+            onChange={(event, selectedDate) => {
+              setShowPicker(false);
+              if (selectedDate) setDate(selectedDate);
+            }}
+          />
+        )}
+
+        {/* Visit Type */}
+        <Text style={styles.label}>Visit Type</Text>
         <View style={styles.optionsRow}>
-          <View style={styles.optionBox}><Text>In Person</Text></View>
-          <View style={styles.optionBox}><Text>Online</Text></View>
+          {["In-Person", "Virtual"].map((type) => {
+            const active = visitType === type;
+            return (
+              <TouchableOpacity
+                key={type}
+                onPress={() => setVisitType(type as any)}
+                style={[
+                  styles.optionBox,
+                  active && styles.optionActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    active && styles.optionTextActive,
+                  ]}
+                >
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Additional Notes */}
-        <Text style={styles.label}>Additional Notes</Text>
-        <View style={styles.notesBox}><Text>Type notes here...</Text></View>
+        {/* Notes */}
+        <Text style={styles.label}>Notes (Optional)</Text>
+        <TextInput
+          style={styles.notesBox}
+          placeholder="Any specific concerns or symptoms..."
+          multiline
+          value={notes}
+          onChangeText={setNotes}
+        />
 
-        {/* Request Appointment Button */}
-        <View style={styles.button}>
+        {/* Submit */}
+        <TouchableOpacity
+          style={[
+            styles.button,
+            !appointmentType || !date ? { opacity: 0.6 } : null,
+          ]}
+          disabled={!appointmentType || !date}
+          onPress={handleSubmit}
+        >
           <Text style={styles.buttonText}>Request Appointment</Text>
-        </View>
-
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  header: { fontSize: 22, fontWeight: "600", marginBottom: 16 },
-  label: { fontSize: 16, fontWeight: "500", marginTop: 16, marginBottom: 8 },
-  inputBox: {
-    backgroundColor: "#f7f7f7",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  optionsRow: { flexDirection: "row", justifyContent: "space-between" },
-  optionBox: {
-    flex: 1,
-    backgroundColor: "#eee",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 4,
-  },
-  notesBox: {
-    backgroundColor: "#f7f7f7",
+  container: {
+    backgroundColor: "#FFFFFF",
     padding: 16,
-    borderRadius: 10,
-    height: 100,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: "90%",
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
+
+  header: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+
+  input: {
+    backgroundColor: "#F9FAFB",
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+
+  optionsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  optionBox: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+  },
+
+  optionActive: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FB923C",
+  },
+
+  optionText: {
+    fontSize: 14,
+    color: "#374151",
+  },
+
+  optionTextActive: {
+    color: "#F97316",
+    fontWeight: "600",
+  },
+
+  notesBox: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 14,
+    minHeight: 90,
+    textAlignVertical: "top",
+  },
+
   button: {
     backgroundColor: "#FF6A00",
     paddingVertical: 14,
-    borderRadius: 20,
+    borderRadius: 30,
     alignItems: "center",
-    marginVertical: 24,
+    marginTop: 24,
+    marginBottom: 12,
   },
+
   buttonText: {
-    color: "#fff",
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "600",
-    fontSize: 16,
   },
 });
