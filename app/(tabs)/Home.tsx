@@ -12,6 +12,8 @@ import SmallBox from "@/components/SmallBox";
 import { ScreenSkeleton } from "@/components/layouts/ScreenSkeleton";
 import LogSymptomsMain from "@/app/(tabs)/LogSymptomsMain";
 import BookAppointmentMain from "@/app/(tabs)/book-appointment";
+import { router } from "expo-router";
+
 
 
 export default function HomeScreen() {
@@ -77,7 +79,13 @@ export default function HomeScreen() {
           <SmallBox title="My Notes" icon="document-outline" color="#F59E0B" />
           <SmallBox title="Symptom Tracker" icon="pulse-outline" color="#EF4444" />
           <SmallBox title="Find Doctor" icon="location-outline" color="#3B82F6" />
-          <SmallBox title="Family History" icon="people-outline" color="#8B5CF6" />
+          <SmallBox
+  title="Family History"
+  icon="people-outline"
+  color="#8B5CF6"
+  onPress={() => router.push("/familyHealthHistory")}
+/>
+
           <SmallBox title="Appointment Prep" icon="calendar-outline" color="#10B981" />
           <SmallBox title="Exam Records" icon="folder-outline" color="#6366F1" />
         </View>
