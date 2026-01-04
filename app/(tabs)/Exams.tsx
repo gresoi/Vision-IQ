@@ -1,7 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
-import { ScreenSkeleton } from "../../components/layouts/ScreenSkeleton"
+import { ScreenSkeleton } from "../../components/layouts/ScreenSkeleton";
 
 export default function Exams() {
+  // TODO-API: FETCH_EXAM_RECORDS
+  // Request: { userId }
+  // Response: { exams[] with id, examType, examDate, doctorName, clinic, visionPrescription, diagnosis, recommendations, documentUrl, notes }
+  
   return (
     <ScreenSkeleton>
       <View style={styles.content}>

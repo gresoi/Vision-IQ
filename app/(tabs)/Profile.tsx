@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { ScreenSkeleton } from "@/components/layouts/ScreenSkeleton";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { router } from 'expo-router';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
@@ -34,6 +34,10 @@ function OptionRow({ icon, title, subtitle }: { icon: React.ReactNode; title: st
 }
 
 export default function Profile() {
+  // TODO-API: FETCH_PROFILE_REQUEST
+  // Request: { userId }
+  // Response: { name, email, phone, dateOfBirth, memberSince, profileImageUrl }
+  
   return (
     <ScreenSkeleton>
       <ScrollView
@@ -48,6 +52,9 @@ export default function Profile() {
             </View>
 
             <TouchableOpacity style={styles.cameraButton}>
+              {/* TODO-API: UPLOAD_PROFILE_PICTURE */}
+              {/* Request: { userId, imageFile, mimeType } */}
+              {/* Response: { success, profileImageUrl } */}
               <Ionicons name="camera-outline" size={14} color="#fff" />
             </TouchableOpacity>
           </View>

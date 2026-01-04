@@ -1,17 +1,21 @@
+import { ScreenSkeleton } from "@/components/layouts/ScreenSkeleton";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { ScreenSkeleton } from "@/components/layouts/ScreenSkeleton";
 
 export default function FamilyHealthHistory() {
+  // TODO-API: FETCH_FAMILY_HISTORY
+  // Request: { userId }
+  // Response: { familyMembers[] with id, userId, name, relation, conditions[], diagnosisAge, notes }
+  
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const [familyMembers, setFamilyMembers] = useState([
@@ -59,6 +63,10 @@ export default function FamilyHealthHistory() {
   const addFamilyMember = () => {
     if (!memberName.trim() || !memberRelation.trim()) return;
 
+    // TODO-API: CREATE_FAMILY_MEMBER
+    // Request: { userId, name, relation, conditions[], notes }
+    // Response: { success, memberId }
+
     setFamilyMembers((prev) => [
       ...prev,
       {
@@ -78,6 +86,10 @@ export default function FamilyHealthHistory() {
   const addCondition = () => {
     if (!conditionText.trim() || selectedMemberId === null) return;
 
+    // TODO-API: UPDATE_FAMILY_MEMBER
+    // Request: { memberId, userId, newCondition }
+    // Response: { success, updatedMember }
+
     setFamilyMembers((prev) =>
       prev.map((member) =>
         member.id === selectedMemberId
@@ -96,6 +108,9 @@ export default function FamilyHealthHistory() {
   const deleteFamilyMember = () => {
     if (memberToDelete === null) return;
 
+    // TODO-API: DELETE_FAMILY_MEMBER
+    // Request: { memberId, userId }
+    // Response: { success }
     setFamilyMembers((prev) =>
       prev.filter((member) => member.id !== memberToDelete)
     );

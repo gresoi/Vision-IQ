@@ -1,7 +1,11 @@
-import { ScrollView, View, Text, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 
 export default function AppointmentsSkeleton() {
+  // TODO-API: FETCH_UPCOMING_APPOINTMENTS
+  // Request: { userId, status: "upcoming", limit }
+  // Response: { appointments[] with id, appointmentType, doctorName, dateTime, location, visitType, status, meetingLink }
+  
   return (
     <View style={styles.container}>
       <ScrollView>
