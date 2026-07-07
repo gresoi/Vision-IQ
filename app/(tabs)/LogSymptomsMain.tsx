@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getUserSymptoms, saveSymptoms } from "@/api/symptoms";
 import {
   ScrollView,
   StyleSheet,
@@ -26,28 +27,66 @@ export default function LogSymptomsMain({ onClose }: Props) {
   const [eye, setEye] = useState<"Left" | "Right" | "Both">("Both");
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // LOAD EXISTING DATA
+  useEffect(() => {
+    loadSymptoms();
+  }, []);
+
+  async function loadSymptoms() {
+    try {
+      setLoading(true);
+      const data = await getUserSymptoms();
+      if (data) {
+        setEye(data.affected_eye as "Left" | "Right" | "Both");
+        setSelectedSymptoms(data.symptoms ?? []);
+        setNotes(data.notes ?? "");
+      }
+    } catch (error) {
+      console.log("Get symptoms error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const toggleSymptom = (symptom: string) => {
     setSelectedSymptoms((prev) =>
       prev.includes(symptom)
-        ? prev.filter((s) => s !== symptom)
-        : [...prev, symptom]
+        ? prev.filter((item) => item !== symptom)
+        : [...prev, symptom],
     );
   };
 
-  const handleSave = () => {
-    const data = {
-      eye,
-      symptoms: selectedSymptoms,
-      notes,
-      date: new Date(),
-    };
+  //   const handleSave = () => {
+  //   const data = {
+  //     eye,
+  //     symptoms: selectedSymptoms,
+  //     notes,
+  //     date: new Date(),
+  //   };
 
-    // TODO-API: CREATE_SYMPTOM_LOG
-    // Request: { userId, eye, symptoms[], notes, timestamp }
-    // Response: { success, symptomLogId, savedAt }
-    console.log("Saved Log:", data);
-    onClose(); // ✅ GO BACK TO HOME
+  //   // TODO-API: CREATE_SYMPTOM_LOG
+  //   // Request: { userId, eye, symptoms[], notes, timestamp }
+  //   // Response: { success, symptomLogId, savedAt }
+  //   console.log("Saved Log:", data);
+  //   onClose(); // ✅ GO BACK TO HOME
+  // };
+  // SAVE / UPDATE
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      await saveSymptoms({
+        affected_eye: eye,
+        symptoms: selectedSymptoms,
+        notes: notes || null,
+      });
+      onClose();
+    } catch (error) {
+      console.log("Save symptoms error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,18 +108,10 @@ export default function LogSymptomsMain({ onClose }: Props) {
             return (
               <TouchableOpacity
                 key={item}
-                onPress={() => setEye(item as any)}
-                style={[
-                  styles.eyeChip,
-                  active && styles.eyeChipActive,
-                ]}
+                onPress={() => setEye(item as "Left" | "Right" | "Both")}
+                style={[styles.eyeChip, active && styles.eyeChipActive]}
               >
-                <Text
-                  style={[
-                    styles.eyeText,
-                    active && styles.eyeTextActive,
-                  ]}
-                >
+                <Text style={[styles.eyeText, active && styles.eyeTextActive]}>
                   {item}
                 </Text>
               </TouchableOpacity>
@@ -97,10 +128,7 @@ export default function LogSymptomsMain({ onClose }: Props) {
               <TouchableOpacity
                 key={item.label}
                 onPress={() => toggleSymptom(item.label)}
-                style={[
-                  styles.symptomBox,
-                  active && styles.symptomActive,
-                ]}
+                style={[styles.symptomBox, active && styles.symptomActive]}
               >
                 <MaterialCommunityIcons
                   name={item.icon as any}
@@ -134,12 +162,16 @@ export default function LogSymptomsMain({ onClose }: Props) {
         <TouchableOpacity
           style={[
             styles.saveBtn,
-            selectedSymptoms.length === 0 && { opacity: 0.6 },
+            (selectedSymptoms.length === 0 || loading) && {
+              opacity: 0.6,
+            },
           ]}
-          disabled={selectedSymptoms.length === 0}
+          disabled={selectedSymptoms.length === 0 || loading}
           onPress={handleSave}
         >
-          <Text style={styles.saveText}>Save Entry</Text>
+          <Text style={styles.saveText}>
+            {loading ? "Saving..." : "Save Entry"}
+          </Text>
         </TouchableOpacity>
 
         <Text style={styles.footerText}>

@@ -75,6 +75,44 @@ export type Database = {
         }
         Relationships: []
       }
+      symptoms: {
+        Row: {
+          affected_eye: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          recorded_at: string | null
+          symptoms: string[]
+          user_id: string
+        }
+        Insert: {
+          affected_eye: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          recorded_at?: string | null
+          symptoms: string[]
+          user_id: string
+        }
+        Update: {
+          affected_eye?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          recorded_at?: string | null
+          symptoms?: string[]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "symptoms_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
