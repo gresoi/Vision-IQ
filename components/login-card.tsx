@@ -8,59 +8,51 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { signUp, signInWithGoogle } from "@/api/auth";
+import { signIn, signInWithGoogle, resetPassword } from "@/api/auth"; 
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
-export default function SignupCard() {
-  const [fullName, setFullName] = useState("");
+export default function LoginCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     GoogleSignin.configure({
-
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     });
   }, []);
 
-  async function handleSignUp() {
-  if (!acceptedTerms) {
-    alert("Please accept the Terms of Service.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    await signUp({
-      fullName,
-      email,
-      password,
-    });
-
-    alert("Account created successfully! Check your email for the verification code.");
-
-    router.push({
-      pathname: "/verify-email",
-      params: { email: email.trim().toLowerCase() },
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      alert(error.message);
-    } else {
-      alert("Something went wrong.");
+  async function handleLogin() {
+    if (!email.trim() || !password.trim()) {
+      alert("Please enter both email and password.");
+      return;
     }
-  } finally {
-    setLoading(false);
-  }
-}
-async function handleGoogleLogin() {
+
     try {
       setLoading(true);
-    
+
+      await signIn({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      alert("Logged in successfully!");
+      router.replace("/(tabs)");
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Invalid email or password.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    try {
+      setLoading(true);
+      
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
 
@@ -68,8 +60,7 @@ async function handleGoogleLogin() {
         await signInWithGoogle(userInfo.data.idToken);
         
         alert("Logged in successfully with Google!");
-        router.push("/profile-setup");
-
+        router.replace("/(tabs)");
       } else {
         throw new Error("No secure ID Token returned by Google Engine.");
       }
@@ -81,8 +72,23 @@ async function handleGoogleLogin() {
     }
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      alert("Please enter your email address first to reset your password.");
+      return;
+    }
 
-  
+    try {
+      setLoading(true);
+      await resetPassword(email.trim().toLowerCase());
+      alert("Password reset request sent! Check your email inbox.");
+    } catch (error: any) {
+      alert(error.message || "Failed to send reset email.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <View style={styles.card}>
       {/* Header */}
@@ -92,29 +98,12 @@ async function handleGoogleLogin() {
         </TouchableOpacity>
       </View>
 
-      {/* Progress */}
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressItem, styles.active]} />
-        <View style={styles.progressItem} />
-        <View style={styles.progressItem} />
-        <View style={styles.progressItem} />
-      </View>
-
       {/* Title */}
-      <Text style={styles.title}>Create Your Account</Text>
-      <Text style={styles.subtitle}>It takes less than a minute.</Text>
+      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.subtitle}>Sign in to continue tracking your progress.</Text>
 
-      {/* Full Name */}
-      <Text style={styles.label}>Full Name</Text>
-      <TextInput
-        placeholder="Jane Doe"
-        style={styles.input}
-        value={fullName}
-        onChangeText={setFullName}
-      />
-
-      {/* Email / Phone */}
-      <Text style={styles.label}>Email or Phone Number</Text>
+      {/* Email Input */}
+      <Text style={styles.label}>Email Address</Text>
       <TextInput
         placeholder="jane@example.com"
         style={styles.input}
@@ -124,8 +113,13 @@ async function handleGoogleLogin() {
         onChangeText={setEmail}
       />
 
-      {/* Password */}
-      <Text style={styles.label}>Password</Text>
+      {/* Password Input */}
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>Password</Text>
+        <TouchableOpacity onPress={handleForgotPassword} disabled={loading}>
+          <Text style={styles.forgotText}>Forgot Password?</Text>
+        </TouchableOpacity>
+      </View>
       <TextInput
         placeholder="••••••••"
         style={styles.input}
@@ -133,31 +127,17 @@ async function handleGoogleLogin() {
         value={password}
         onChangeText={setPassword}
       />
-      {/* Terms */}
-      <View style={styles.termsRow}>
-        <TouchableOpacity
-          style={[
-            styles.checkbox,
-            acceptedTerms && { backgroundColor: "#FF6A00" },
-          ]}
-          onPress={() => setAcceptedTerms((prev) => !prev)}
-        />
-        <Text style={styles.termsText}>
-          I agree to the <Text style={styles.link}>Terms of Service</Text> and{" "}
-          <Text style={styles.link}>Privacy Policy</Text>
-        </Text>
-      </View>
 
-      {/* Create Account */}
+      {/* Sign In Button */}
       <TouchableOpacity
-  style={styles.button}
-  onPress={handleSignUp}
-  disabled={loading}
->
-  <Text style={styles.buttonText}>
-    {loading ? "Creating Account..." : "Create Account"}
-  </Text>
-</TouchableOpacity>
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "Signing In..." : "Sign In"}
+        </Text>
+      </TouchableOpacity>
 
       {/* Divider */}
       <View style={styles.dividerRow}>
@@ -166,25 +146,26 @@ async function handleGoogleLogin() {
         <View style={styles.divider} />
       </View>
 
-      {/* Social */}
-      {/* TODO-API: OAUTH_SIGNUP */}
-      {/* Provider: google | apple */}
-      {/* Response: { userId, sessionToken, user { email, fullName, avatarUrl } } */}
+      {/* Social Row */}
       <View style={styles.socialRow}>
         <TouchableOpacity 
           style={styles.socialButton}
           onPress={handleGoogleLogin}
           disabled={loading}
         >
-          <Text>Google</Text>
+          <Text style={styles.socialButtonText}>Google</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}>
-          <Text>Apple</Text>
+        <TouchableOpacity style={styles.socialButton} disabled={loading}>
+          <Text style={styles.socialButtonText}>Apple</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Footer */}
-      <Text style={styles.footerText}>Your data is secure with us.</Text>
+      {/* Footer Switch */}
+      <TouchableOpacity onPress={() => router.push("/signup")} disabled={loading}>
+        <Text style={styles.footerSwitchText}>
+          Don't have an account? <Text style={styles.link}>Sign Up</Text>
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -195,40 +176,34 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 24,
   },
-
   header: {
     marginBottom: 16,
   },
-
-  progressContainer: {
-    flexDirection: "row",
-    marginBottom: 24,
-  },
-  progressItem: {
-    flex: 1,
-    height: 3,
-    backgroundColor: "#E5E7EB",
-    marginRight: 6,
-    borderRadius: 2,
-  },
-  active: {
-    backgroundColor: "#FF6A00",
-  },
-
   title: {
     fontSize: 22,
     fontWeight: "700",
     marginBottom: 6,
+    color: "#111",
   },
   subtitle: {
     fontSize: 14,
     color: "#6B7280",
     marginBottom: 24,
   },
-
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   label: {
     fontSize: 13,
     color: "#374151",
+    marginBottom: 6,
+  },
+  forgotText: {
+    fontSize: 12,
+    color: "#FF6A00",
+    fontWeight: "600",
     marginBottom: 6,
   },
   input: {
@@ -239,44 +214,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "#fff",
   },
-
-  termsRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 24,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 4,
-    marginRight: 10,
-    marginTop: 2,
-  },
-  termsText: {
-    fontSize: 12,
-    color: "#6B7280",
-    flex: 1,
-  },
-  link: {
-    color: "#FF6A00",
-    fontWeight: "600",
-  },
-
   button: {
     backgroundColor: "#FF6A00",
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
     marginBottom: 24,
+    marginTop: 8,
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
-
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -292,11 +242,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#9CA3AF",
   },
-
   socialRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   socialButton: {
     flex: 1,
@@ -308,10 +257,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     backgroundColor: "#fff",
   },
-
-  footerText: {
+  socialButtonText: {
+    fontWeight: "500",
+    color: "#374151",
+  },
+  footerSwitchText: {
     textAlign: "center",
-    fontSize: 12,
-    color: "#9CA3AF",
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  link: {
+    color: "#FF6A00",
+    fontWeight: "600",
   },
 });
