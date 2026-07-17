@@ -39,6 +39,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          appointment_date: string
+          created_at: string
+          doctor_questions: Json
+          id: string
+          notes: string | null
+          place: string | null
+          provider_name: string
+          updated_at: string
+          user_id: string
+          user_notes: Json
+        }
+        Insert: {
+          appointment_date: string
+          created_at?: string
+          doctor_questions?: Json
+          id?: string
+          notes?: string | null
+          place?: string | null
+          provider_name: string
+          updated_at?: string
+          user_id: string
+          user_notes?: Json
+        }
+        Update: {
+          appointment_date?: string
+          created_at?: string
+          doctor_questions?: Json
+          id?: string
+          notes?: string | null
+          place?: string | null
+          provider_name?: string
+          updated_at?: string
+          user_id?: string
+          user_notes?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_notes: {
+        Row: {
+          appointment_id: string
+          content: string
+          created_at: string
+          doctor_name: string
+          id: string
+          note_type: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          content: string
+          created_at?: string
+          doctor_name: string
+          id?: string
+          note_type: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          content?: string
+          created_at?: string
+          doctor_name?: string
+          id?: string
+          note_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_notes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_history: {
         Row: {
           conditions: string[]
@@ -70,6 +155,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "family_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          created_at: string
+          dosage: string | null
+          frequency: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dosage?: string | null
+          frequency?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dosage?: string | null
+          frequency?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

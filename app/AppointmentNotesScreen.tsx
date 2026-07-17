@@ -1,7 +1,9 @@
+import { getAppointment, updateAppointment } from "@/api/appointment";
+import { DoctorNote, getDoctorNotesByAppointmentId } from "@/api/doctorNotes";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  ScrollView,
+  ActivityIndicator, Alert, Modal, ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -10,108 +12,157 @@ import {
 } from "react-native";
 
 /* ---------------- TYPES ---------------- */
-
-interface UserNote {
-  id: number;
+type UserNote = {
+  id: string;
   type: string;
-  text: string;
-  date: string;
-}
-
-interface DoctorNote {
-  id: number;
-  type: string;
-  text: string;
-  date: string;
-  doctor: string;
-}
+  content: string;
+  created_at: string;
+  updated_at: string;
+};
 
 /* ---------------- SCREEN ---------------- */
-
 export default function AppointmentNotesScreen() {
   const [activeTab, setActiveTab] = useState<"USER" | "DOCTOR">("USER");
 
-  const [userNotes, setUserNotes] = useState<UserNote[]>([
-    {
-      id: 1,
-      type: "Symptom",
-      text: "Experiencing dry eyes after 4+ hours of screen time",
-      date: "Dec 15, 2025 • 9:30 AM",
-    },
-    {
-      id: 2,
-      type: "Question",
-      text: "Ask doctor about blue light glasses effectiveness",
-      date: "Dec 15, 2025 • 10:15 AM",
-    },
-    {
-      id: 3,
-      type: "Reminder",
-      text: "Remember to bring current glasses for comparison",
-      date: "Dec 15, 2025 • 11:00 AM",
-    },
-  ]);
+  const [userNotes, setUserNotes] = useState<UserNote[]>([]);
+  const [doctorNotes, setDoctorNotes] = useState<DoctorNote[]>([]);
+  const [showNoteModal, setShowNoteModal] = useState(false);
 
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [noteType, setNoteType] = useState<
+    "Note" | "Question" | "Symptom" | "Reminder"
+  >("Note");
+
+  const [noteContent, setNoteContent] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  // const { appointmentId } = useLocalSearchParams<{
+  //   appointmentId: string;
+  // }>();
+  const appointmentId = "4988d069-b394-4359-bf6a-74d4d34aeb8f"; // for testing
+  const [loadingUserNotes, setLoadingUserNotes] = useState(false);
+  const [loadingDoctorNotes, setLoadingDoctorNotes] = useState(false);
 
   /* ---------------- USER ACTIONS ---------------- */
+  const addUserNote = async () => {
+    if (!noteContent.trim()) {
+      Alert.alert("Please enter a note.");
+      return;
+    }
 
-  const addUserNote = () => {
-    setUserNotes((prev) => [
-      {
-        id: Date.now(),
-        type: "Note",
-        text: "",
-        date: "Just now",
-      },
-      ...prev,
-    ]);
+    const newNote: UserNote = {
+      id: Date.now().toString(),
+      type: noteType,
+      content: noteContent.trim(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const updatedNotes = [newNote, ...userNotes];
+
+    try {
+      await updateAppointment(appointmentId, {
+        user_notes: updatedNotes,
+      });
+
+      setUserNotes(updatedNotes);
+
+      setNoteContent("");
+      setNoteType("Note");
+      setShowNoteModal(false);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to add note.");
+    }
   };
 
-  const deleteUserNote = (id: number) => {
-    setUserNotes((prev) => prev.filter((note) => note.id !== id));
+  const deleteUserNote = async (id: string) => {
+    if (!appointmentId || Array.isArray(appointmentId)) {
+      return;
+    }
+
+    const updatedNotes = userNotes.filter((note) => note.id !== id);
+
+    try {
+      await updateAppointment(appointmentId, {
+        user_notes: updatedNotes,
+      });
+
+      setUserNotes(updatedNotes);
+
+      if (editingId === id) {
+        setEditingId(null);
+        setEditingText("");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to delete note.");
+    }
   };
 
-  const saveEdit = (id: number) => {
-    setUserNotes((prev) =>
-      prev.map((note) =>
-        note.id === id ? { ...note, text: editingText } : note
-      )
+  const saveEdit = async (id: string) => {
+    if (!appointmentId || Array.isArray(appointmentId)) {
+      return;
+    }
+
+    const updatedNotes = userNotes.map((note) =>
+      note.id === id
+        ? {
+            ...note,
+            content: editingText,
+            updated_at: new Date().toISOString(),
+          }
+        : note,
     );
-    setEditingId(null);
-    setEditingText("");
-  };
 
+    try {
+      await updateAppointment(appointmentId, {
+        user_notes: updatedNotes,
+      });
+
+      setUserNotes(updatedNotes);
+      setEditingId(null);
+      setEditingText("");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to update note.");
+    }
+  };
   /* ---------------- DOCTOR NOTES ---------------- */
 
-  const doctorNotes: DoctorNote[] = [
-    {
-      id: 1,
-      type: "Diagnosis",
-      text:
-        "Patient presents with mild computer vision syndrome. Visual acuity 20/20 both eyes.",
-      date: "Dec 15, 2025 • 2:30 PM",
-      doctor: "Dr. Sarah Johnson",
-    },
-    {
-      id: 2,
-      type: "Prescription",
-      text:
-        "Updated prescription: OD -1.25 -0.50 x180, OS -1.50 -0.25 x175.",
-      date: "Dec 15, 2025 • 2:45 PM",
-      doctor: "Dr. Sarah Johnson",
-    },
-    {
-      id: 3,
-      type: "Recommendation",
-      text:
-        "Follow 20-20-20 rule. Every 20 minutes, look 20 feet away for 20 seconds. Use artificial tears daily.",
-      date: "Dec 15, 2025 • 2:50 PM",
-      doctor: "Dr. Sarah Johnson",
-    },
-  ];
+  async function loadUserNotes() {
+    try {
+      setLoadingUserNotes(true);
+      if (!appointmentId || Array.isArray(appointmentId)) return;
+      const appointment = await getAppointment(appointmentId);
 
+      setUserNotes(appointment.user_notes ?? []);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to load appointment.");
+    } finally {
+      setLoadingUserNotes(false);
+    }
+  }
+
+  async function loadDoctorNotes() {
+    try {
+      setLoadingDoctorNotes(true);
+      if (!appointmentId || Array.isArray(appointmentId)) return;
+      const doctorNotes = await getDoctorNotesByAppointmentId(appointmentId);
+      setDoctorNotes(doctorNotes);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to load doctor notes.");
+    } finally {
+      setLoadingDoctorNotes(false);
+    }
+  }
+
+  useEffect(() => {
+    loadUserNotes();
+    loadDoctorNotes();
+  }, []);
   /* ---------------- UI ---------------- */
 
   return (
@@ -127,6 +178,7 @@ export default function AppointmentNotesScreen() {
           onPress={() => setActiveTab("USER")}
           type="USER"
         />
+
         <TabButton
           title="Doctor Notes"
           active={activeTab === "DOCTOR"}
@@ -135,10 +187,9 @@ export default function AppointmentNotesScreen() {
         />
       </View>
 
-      {/* ---------------- USER NOTES ---------------- */}
+      {/* ================= USER NOTES ================= */}
       {activeTab === "USER" && (
         <>
-          {/* Blue info box */}
           <View style={styles.infoCardBlue}>
             <Text style={styles.infoTitle}>Your Personal Notes</Text>
             <Text style={styles.infoText}>
@@ -147,87 +198,111 @@ export default function AppointmentNotesScreen() {
             </Text>
           </View>
 
-          {/* Add button */}
-          <TouchableOpacity style={styles.addBtn} onPress={addUserNote}>
-            <Ionicons name="add-circle-outline" size={20} color="#2563eb" />
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => setShowNoteModal(true)}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#2563EB" />
             <Text style={styles.addText}>Add New Note</Text>
           </TouchableOpacity>
 
-          {userNotes.map((note) => (
-            <View key={note.id.toString()} style={styles.noteCard}>
-              
-              {/* Badge */}
-              <View
-                style={[
-                  styles.badge,
-                  note.type === "Symptom" && styles.symptom,
-                  note.type === "Question" && styles.question,
-                  note.type === "Reminder" && styles.reminder,
-                ]}
-              >
-                <Text
+          {/* Loading */}
+          {loadingUserNotes ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#2563EB" />
+              <Text style={styles.loadingText}>Loading your notes...</Text>
+            </View>
+          ) : userNotes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons
+                name="document-text-outline"
+                size={48}
+                color="#9CA3AF"
+              />
+              <Text style={styles.emptyTitle}>No Notes Yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Tap "Add New Note" to create your first appointment note.
+              </Text>
+            </View>
+          ) : (
+            userNotes.map((note) => (
+              <View key={note.id} style={styles.noteCard}>
+                <View
                   style={[
-                    styles.badgeText,
-                    note.type === "Symptom" && styles.symptomText,
-                    note.type === "Question" && styles.questionText,
-                    note.type === "Reminder" && styles.reminderText,
+                    styles.badge,
+                    note.type === "Symptom" && styles.symptom,
+                    note.type === "Question" && styles.question,
+                    note.type === "Reminder" && styles.reminder,
+                    note.type === "Note" && styles.noteBadge,
                   ]}
                 >
-                  {note.type}
-                </Text>
-              </View>
-
-              <Text style={styles.date}>{note.date}</Text>
-
-              {editingId === note.id ? (
-                <>
-                  <TextInput
-                    style={styles.editInput}
-                    value={editingText}
-                    onChangeText={setEditingText}
-                    multiline
-                    autoFocus
-                  />
-                  <TouchableOpacity onPress={() => saveEdit(note.id)}>
-                    <Text style={styles.saveText}>Save</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.noteText}>
-                    {note.text || "Tap edit to add text"}
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      note.type === "Symptom" && styles.symptomText,
+                      note.type === "Question" && styles.questionText,
+                      note.type === "Reminder" && styles.reminderText,
+                      note.type === "Note" && styles.noteBadgeText,
+                    ]}
+                  >
+                    {note.type}
                   </Text>
+                </View>
 
-                  <View style={styles.actionsRow}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setEditingId(note.id);
-                        setEditingText(note.text);
-                      }}
-                    >
-                      <Text style={styles.editText}>Edit</Text>
-                    </TouchableOpacity>
+                <Text style={styles.date}>
+                  {new Date(note.created_at).toLocaleString()}
+                </Text>
 
-                    <TouchableOpacity
-                      onPress={() => deleteUserNote(note.id)}
-                    >
-                      <Feather name="trash-2" size={18} color="#ef4444" />
+                {editingId === note.id ? (
+                  <>
+                    <TextInput
+                      style={styles.editInput}
+                      value={editingText}
+                      onChangeText={setEditingText}
+                      multiline
+                      autoFocus
+                    />
+
+                    <TouchableOpacity onPress={() => saveEdit(note.id)}>
+                      <Text style={styles.saveText}>Save</Text>
                     </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </View>
-          ))}
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.noteText}>
+                      {note.content || "Tap Edit to add note..."}
+                    </Text>
+
+                    <View style={styles.actionsRow}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditingId(note.id);
+                          setEditingText(note.content);
+                        }}
+                      >
+                        <Text style={styles.editText}>Edit</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => deleteUserNote(note.id)}>
+                        <Feather name="trash-2" size={18} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            ))
+          )}
         </>
       )}
 
-      {/* ---------------- DOCTOR NOTES ---------------- */}
+      {/* ================= DOCTOR NOTES ================= */}
       {activeTab === "DOCTOR" && (
         <>
           <View style={styles.infoCardGreen}>
             <Text style={styles.infoTitleGreen}>
               Clinical Notes from Your Doctor
             </Text>
+
             <Text style={styles.infoTextGreen}>
               These notes are provided by your healthcare provider and contain
               diagnosis, prescriptions, and recommendations.
@@ -236,22 +311,110 @@ export default function AppointmentNotesScreen() {
 
           <View style={styles.infoCardYellow}>
             <Text style={styles.infoTextYellow}>
-              Doctor's notes are read-only. If you have questions, contact your
-              provider.
+              Doctor notes are read-only. Contact your provider if you have
+              questions.
             </Text>
           </View>
 
-          {doctorNotes.map((note) => (
-            <View key={note.id.toString()} style={styles.noteCard}>
-              <Text style={styles.date}>{note.date}</Text>
-              <Text style={styles.noteText}>{note.text}</Text>
-              <Text style={styles.doctorName}>{note.doctor}</Text>
+          {/* Loading */}
+          {loadingDoctorNotes ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#16A34A" />
+              <Text style={styles.loadingText}>Loading doctor notes...</Text>
             </View>
-          ))}
+          ) : doctorNotes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="clipboard-outline" size={48} color="#9CA3AF" />
+
+              <Text style={styles.emptyTitle}>No Doctor Notes</Text>
+
+              <Text style={styles.emptySubtitle}>
+                Your doctor hasn't added any clinical notes for this appointment
+                yet.
+              </Text>
+            </View>
+          ) : (
+            doctorNotes.map((note) => (
+              <View key={note.id} style={styles.noteCard}>
+                <Text style={styles.date}>
+                  {new Date(note.created_at).toLocaleString()}
+                </Text>
+
+                <Text style={styles.noteText}>{note.content}</Text>
+
+                <Text style={styles.doctorName}>{note.doctor_name}</Text>
+              </View>
+            ))
+          )}
         </>
       )}
 
       <View style={{ height: 40 }} />
+      <Modal
+        visible={showNoteModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNoteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Add Note</Text>
+
+            <Text style={styles.modalLabel}>Note Type</Text>
+
+            <View style={styles.typeContainer}>
+              {["Note", "Question", "Symptom", "Reminder"].map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.typeButton,
+                    noteType === type && styles.typeButtonSelected,
+                  ]}
+                  onPress={() => setNoteType(type as any)}
+                >
+                  <Text
+                    style={[
+                      styles.typeButtonText,
+                      noteType === type && styles.typeButtonTextSelected,
+                    ]}
+                  >
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.noteInput}
+              placeholder="Write your note..."
+              multiline
+              numberOfLines={5}
+              value={noteContent}
+              onChangeText={setNoteContent}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowNoteModal(false)}
+              >
+                <Text>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.saveButton} onPress={addUserNote}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "700",
+                  }}
+                >
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -272,7 +435,8 @@ const TabButton = ({
   <TouchableOpacity
     style={[
       styles.tabBtn,
-      active && (type === "USER" ? styles.tabActiveUser : styles.tabActiveDoctor),
+      active &&
+        (type === "USER" ? styles.tabActiveUser : styles.tabActiveDoctor),
     ]}
     onPress={onPress}
   >
@@ -377,4 +541,131 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 8,
   },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+
+  emptyState: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    marginTop: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  emptySubtitle: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+
+  noteBadge: {
+    backgroundColor: "#F3F4F6",
+  },
+
+  noteBadgeText: {
+    color: "#374151",
+  },
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.45)",
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+modalContainer: {
+  width: "90%",
+  backgroundColor: "#fff",
+  borderRadius: 16,
+  padding: 20,
+},
+
+modalTitle: {
+  fontSize: 20,
+  fontWeight: "700",
+  marginBottom: 20,
+},
+
+modalLabel: {
+  fontWeight: "600",
+  marginBottom: 8,
+},
+
+typeContainer: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  marginBottom: 20,
+},
+
+typeButton: {
+  borderWidth: 1,
+  borderColor: "#D1D5DB",
+  borderRadius: 20,
+  paddingHorizontal: 14,
+  paddingVertical: 8,
+  marginRight: 8,
+  marginBottom: 8,
+},
+
+typeButtonSelected: {
+  backgroundColor: "#2563EB",
+  borderColor: "#2563EB",
+},
+
+typeButtonText: {
+  color: "#374151",
+},
+
+typeButtonTextSelected: {
+  color: "#fff",
+  fontWeight: "600",
+},
+
+noteInput: {
+  borderWidth: 1,
+  borderColor: "#D1D5DB",
+  borderRadius: 10,
+  padding: 12,
+  minHeight: 120,
+  textAlignVertical: "top",
+  marginBottom: 20,
+},
+
+modalButtons: {
+  flexDirection: "row",
+  justifyContent: "flex-end",
+},
+
+cancelButton: {
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  marginRight: 10,
+},
+
+saveButton: {
+  backgroundColor: "#2563EB",
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  borderRadius: 8,
+},
 });
