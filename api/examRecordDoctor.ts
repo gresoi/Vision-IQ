@@ -1,16 +1,20 @@
 import { supabase } from "@/lib/supabase";
 
-import type {
-  Tables,
-  TablesInsert,
-  TablesUpdate,
-} from "@/types/database.types";
+import type { Tables } from "@/types/database.types";
 
 export type ExamRecord = Tables<"exam_records">;
 // type ExamRecordInsert = TablesInsert<"exam_records">;
 // type ExamRecordUpdate = TablesUpdate<"exam_records">;
+export interface RecentExam {
+  id: string;
+  diagnosis: string | null;
+  created_at: string;
+  doctor: {
+    name: string;
+  };
+}
 
- //Get exam record by appointment ID
+//Get exam record by appointment ID
 export async function getExamRecordByAppointment(
   appointmentId: string
 ): Promise<ExamRecord | null> {
@@ -22,6 +26,46 @@ export async function getExamRecordByAppointment(
 
   if (error) throw error;
   return data;
+}
+
+//get recent exam appointment  moved to another file
+export async function getRecentExams(): Promise<RecentExam[]> {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    console.log("3: user auth failed");
+    throw new Error("User not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("exam_records")
+    .select(
+      `
+  id,
+  diagnosis,
+  created_at,
+  doctor:doctors!exam_records_doctor_id_fkey(name),
+  appointments!inner(user_id)
+`,
+    )
+    .eq("appointments.user_id", user.id);
+
+  if (error) throw error;
+
+  return data.map((exam) => {
+    const doctor = Array.isArray(exam.doctor) ? exam.doctor[0] : exam.doctor;
+    return {
+      id: exam.id,
+      diagnosis: exam.diagnosis,
+      created_at: exam.created_at,
+      doctor: {
+        name: doctor?.name ?? "Unknown Doctor",
+      },
+    };
+  });
 }
 
 //Create exam record

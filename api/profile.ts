@@ -3,6 +3,8 @@ import type { TablesUpdate } from "@/types/database.types";
 
 type ProfileUpdate = TablesUpdate<"profiles">;
 
+export type Profile = TablesUpdate<"profiles">;
+
 // Complete onboarding
 export async function completeOnboarding(updates:ProfileUpdate) {
 const {

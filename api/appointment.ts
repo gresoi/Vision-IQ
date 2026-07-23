@@ -70,6 +70,32 @@ export async function getAppointments() {
   return data;
 }
 
+//Upcoming Appointment
+export async function getUpcomingAppointment() {
+    const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("appointment_date", new Date().toISOString())
+    .order("appointment_date", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
+}
+
+
+
 // GET SINGLE APPOINTMENT
 export async function getAppointment(id: string) {
   const {
