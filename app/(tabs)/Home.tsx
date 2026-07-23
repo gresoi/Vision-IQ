@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { getHomeData, type HomeData } from "@/api/home";
+import { useEffect, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 
 import LogSymptomsMain from "@/app/(tabs)/LogSymptomsMain";
@@ -14,7 +15,56 @@ export default function HomeScreen() {
   // Request: { userId }
   // Response: { user, visionTrend, screenTime, upcomingAppointments, dailyTips, recentExams }
 
+  const [homeData, setHomeData] = useState<HomeData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showLogSymptoms, setShowLogSymptoms] = useState(false);
+  const [showBook, setShowBook] = useState(false);
+
+  async function loadHomeData() {
+    try {
+      setLoading(true);
+      const data = await getHomeData();
+      console.log("Home data loaded:", data);
+
+      setHomeData(data);
+    } catch (error) {
+      console.error("Failed to load home data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadHomeData();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+    return date.toLocaleDateString("en-US", options);
+  };
+
+  const upcomingItems = homeData?.upcomingAppointment
+    ? [
+        {
+          icon: "calendar-outline" as const,
+          label: "Annual Eye Exam",
+          value: `${formatDate(homeData.upcomingAppointment.appointment_date)}`,
+        },
+      ]
+    : [];
+
+  const recentExamItems =
+    homeData?.recentExams.map((exam) => ({
+      icon: "document-text-outline" as const,
+      label: "Annual Eye Exam",
+      value: `${formatDate(exam.created_at)}.${exam.doctor.name} `, //later mapping with the doctor name
+    })) ?? [];
 
   return (
     <ScreenSkeleton>
@@ -22,7 +72,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.container}
       >
-        <Header name="Jane" />
+        <Header name={homeData?.user?.full_name ?? "User"} />
 
         {/* Daily Eye Check */}
         <Card
@@ -52,17 +102,7 @@ export default function HomeScreen() {
         />
 
         {/* Upcoming */}
-        <Card
-          title="Upcoming"
-          rightText="View All"
-          items={[
-            {
-              icon: "calendar-outline",
-              label: "Annual Eye Exam",
-              value: "Dec 18, 2025 at 2:00 PM",
-            },
-          ]}
-        />
+        <Card title="Upcoming" rightText="View All" items={upcomingItems} />
 
         {/* Today's Tip */}
         <Card
@@ -116,13 +156,7 @@ export default function HomeScreen() {
         <Card
           title="Recent Exams"
           rightText="View All"
-          items={[
-            {
-              icon: "document-text-outline",
-              label: "Annual Eye Exam",
-              value: "Dec 15, 2025 · Dr. Sarah Johnson",
-            },
-          ]}
+          items={recentExamItems}
         />
       </ScrollView>
 
@@ -152,8 +186,6 @@ export default function HomeScreen() {
     </ScreenSkeleton>
   );
 }
-
-const [showBook, setShowBook] = useState(false);
 
 const styles = StyleSheet.create({
   container: {

@@ -124,6 +124,39 @@ export type Database = {
           },
         ]
       }
+      doctors: {
+        Row: {
+          address: string
+          created_at: string
+          google_maps_url: string | null
+          id: string
+          name: string
+          phone: string | null
+          specialty: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          google_maps_url?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          specialty: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          google_maps_url?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          specialty?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exam_records: {
         Row: {
           appointment_id: string
@@ -176,7 +209,7 @@ export type Database = {
             foreignKeyName: "exam_records_doctor_id_fkey"
             columns: ["doctor_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "doctors"
             referencedColumns: ["id"]
           },
         ]
